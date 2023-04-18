@@ -20,7 +20,8 @@ function tableSort() {
     // append back to table in new order
     rows.forEach((row) => row.parentNode.appendChild(row));
     // change title text
-    priceSort.querySelector(".link-text").innerText = "Total Price";
+    document.querySelector(".price_header .link-text").innerText =
+      "Total Price";
   }
 }
 
@@ -35,20 +36,22 @@ function getRowPrice(row) {
   return parseFloat(price.textContent.replace(/[^0-9]/g, "")) + weight;
 }
 
-const tableBlock = document.querySelector(".table_block");
+const pjaxContainer = document.querySelector("#pjax_container");
 const observer = new MutationObserver((mutationsList) => {
   for (let mutation of mutationsList) {
     // run function again if we're ajax loading in another table of items
+    // console.log(mutation.addedNodes);
     if (
       mutation.type === "childList" &&
       mutation.addedNodes.length &&
-      mutation.addedNodes[0].nodeName === "TBODY"
+      (mutation.addedNodes[1]?.nodeName === "TBODY" ||
+        mutation.addedNodes[3]?.nodeName === "TABLE")
     ) {
       tableSort();
     }
   }
 });
-observer.observe(tableBlock, { childList: true });
+observer.observe(pjaxContainer, { subtree: true, childList: true });
 
 // first run
 tableSort();
