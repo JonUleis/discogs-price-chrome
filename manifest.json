@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Discogs Total Price Sorter",
-  "version": "2.0",
+  "version": "2.1",
   "description": "Upgrade the Price column on the Discogs Marketplace to sort by total prices instead of pre-shipping prices!",
   "author": "hi@jonuleis.com",
   "icons": {

@@ -93,7 +93,11 @@ if (isShopPage) {
       return;
     }
 
-    const allItemElements = Array.from(document.querySelectorAll("[data-itemid]"));
+    let allItemElements = Array.from(document.querySelectorAll('[data-test="list-item-desktop"]'))
+      .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
+    if (allItemElements.length === 0) {
+      allItemElements = Array.from(document.querySelectorAll("[data-itemid]"));
+    }
     if (allItemElements.length === 0) {
       if (observer && rootContainer) {
         observer.observe(rootContainer, { subtree: true, childList: true });
@@ -183,17 +187,17 @@ if (isShopPage) {
   }
 
   function getItemPrice(itemElement, sortOrder) {
-    const totalPriceEl = itemElement.querySelector("p.italic");
-    const hasTotalPrice = totalPriceEl && /total/.test(totalPriceEl.textContent);
+    const italicEls = itemElement.querySelectorAll(".italic");
+    const totalPriceEl = Array.from(italicEls).find(el => /total/.test(el.textContent));
     const isUnavailable = /unavailable in/i.test(itemElement.textContent);
 
     let priceText = null;
 
-    if (hasTotalPrice) {
+    if (totalPriceEl) {
       priceText = totalPriceEl.textContent;
     } else {
-      const italicEl = itemElement.querySelector("p.italic");
-      if (italicEl && /[\d,]+\.?\d*/.test(italicEl.textContent)) {
+      const italicEl = Array.from(italicEls).find(el => /[\d,]+\.?\d*/.test(el.textContent));
+      if (italicEl) {
         priceText = italicEl.textContent;
       } else {
         const boldElements = itemElement.querySelectorAll(".font-bold");
@@ -221,8 +225,8 @@ if (isShopPage) {
   }
 
   function updateHeaderText() {
-    const priceHeaderButton = document.querySelector(".col-start-4.justify-self-end button");
-    if (priceHeaderButton && priceHeaderButton.textContent.trim() === "Price") {
+    const priceHeaderButton = document.querySelector(".justify-self-end button");
+    if (priceHeaderButton) {
       for (const node of priceHeaderButton.childNodes) {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim() === "Price") {
           node.textContent = "Total Price";
@@ -233,22 +237,27 @@ if (isShopPage) {
   }
 
   let sortTimeout;
-  function debouncedSort() {
-    clearTimeout(sortTimeout);
-    sortTimeout = setTimeout(shopSort, 500);
-  }
+  function debouncedSort(mutations) {
+    const isItemMutation = mutations.some(mutation => {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.matches?.('[data-test="list-item-desktop"], [data-itemid]') ||
+              node.querySelector?.('[data-test="list-item-desktop"], [data-itemid]')) {
+            return true;
+          }
+        }
+      }
+      return false;
+    });
+    if (!isItemMutation) return;
 
-  setTimeout(shopSort, 1000);
+    clearTimeout(sortTimeout);
+    sortTimeout = setTimeout(shopSort, 100);
+  }
 
   rootContainer = document.querySelector("#root");
   if (rootContainer) {
     observer = new MutationObserver(debouncedSort);
     observer.observe(rootContainer, { subtree: true, childList: true });
   }
-
-  document.addEventListener("change", (e) => {
-    if (e.target.tagName === "SELECT" && e.target.classList.contains("brand-select")) {
-      debouncedSort();
-    }
-  });
 }
