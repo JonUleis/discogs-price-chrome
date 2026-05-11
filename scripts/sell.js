@@ -3,8 +3,6 @@
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-const UNAVAILABLE_PRICE = 999999;
-
 function tableSort() {
   const priceSort = document.querySelector(".price_header .sortable_link_selected");
   if (!priceSort) return;
@@ -13,8 +11,13 @@ function tableSort() {
   const rows = Array.from(document.querySelectorAll("tr[data-release-id]"));
 
   rows.sort((rowA, rowB) => {
-    const priceA = getRowPrice(rowA, ascending);
-    const priceB = getRowPrice(rowB, ascending);
+    if (ascending) {
+      const availA = isRowAvailable(rowA);
+      const availB = isRowAvailable(rowB);
+      if (availA !== availB) return availA ? -1 : 1;
+    }
+    const priceA = getRowPrice(rowA);
+    const priceB = getRowPrice(rowB);
     return ascending ? priceA - priceB : priceB - priceA;
   });
 
@@ -26,11 +29,16 @@ function tableSort() {
   }
 }
 
-function getRowPrice(row, ascending) {
-  const price = row.querySelector(".converted_price") || row.querySelector(".price");
-  const hasAddToCart = row.querySelector(".item_add_to_cart .button");
-  const weight = hasAddToCart || !ascending ? 0 : UNAVAILABLE_PRICE;
-  return parseFloat(price.textContent.replace(/[^0-9]/g, "")) + weight;
+function isRowAvailable(row) {
+  return !!row.querySelector(".item_add_to_cart .button");
+}
+
+function getRowPrice(row) {
+  const converted = row.querySelector(".converted_price");
+  const priceEl = converted && converted.textContent.trim()
+    ? converted
+    : row.querySelector(".price");
+  return parseFloat(priceEl.textContent.replace(/[^0-9]/g, ""));
 }
 
 const pjaxContainer = document.querySelector("#pjax_container");
